@@ -36,7 +36,7 @@ def prepare_data(train_folder, validation_folder, validation):
         return train_generator, None
 
 
-def NN_model(base_model_name, visaualize_layers):
+def NN_model(base_model_name, visaualize_layers, freeze_layers):
 
     if base_model_name == 'MobileNetV2':
         base_model=MobileNetV2(weights='imagenet',include_top=False) #imports the mobilenet model and discards the last 1000 neuron layer.
@@ -58,14 +58,14 @@ def NN_model(base_model_name, visaualize_layers):
         for i,layer in enumerate(model.layers):
           print(i,layer.name)
 
+    for layer in model.layers[:freeze_layers]:
+        layer.trainable=False
+
     model.compile(optimizer='Adam',loss='categorical_crossentropy',metrics=['accuracy'])
 
     return model
 
-def train(model, epochs, train_data, validation_data, freeze_layers):
-
-    for layer in model.layers[:freeze_layers]:
-        layer.trainable=False
+def train(model, epochs, train_data, validation_data):
 
     step_size_train=train_data.n//train_data.batch_size
     if validation_data:
@@ -81,5 +81,5 @@ def train(model, epochs, train_data, validation_data, freeze_layers):
 if __name__ == '__main__':
 
     train_data, validation_data = prepare_data('C:\\BDBI\\Prototype\\Train\\Train_images', 'C:\\BDBI\\Prototype\\Train\\Val_images', True)
-    model = NN_model('MobileNetV2', visaualize_layers = True)
-    train(model, 1, train_data, validation_data, 100)
+    model = NN_model('MobileNetV2', visaualize_layers = True, 100)
+    train(model, 1, train_data, validation_data)
