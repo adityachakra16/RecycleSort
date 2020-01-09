@@ -36,7 +36,7 @@ def prepare_data(train_folder, validation_folder, validation):
         return train_generator, None
 
 
-def NN_model(base_model_name, visaualize_layers, freeze_layers):
+def NN_model(base_model_name, freeze_layers, visaualize_layers):
 
     if base_model_name == 'MobileNetV2':
         base_model=MobileNetV2(weights='imagenet',include_top=False) #imports the mobilenet model and discards the last 1000 neuron layer.
@@ -65,7 +65,7 @@ def NN_model(base_model_name, visaualize_layers, freeze_layers):
 
     return model
 
-def train(model, epochs, train_data, validation_data):
+def train(model, epochs, train_data, validation_data, save_model, save_dir):
 
     step_size_train=train_data.n//train_data.batch_size
     if validation_data:
@@ -78,8 +78,16 @@ def train(model, epochs, train_data, validation_data):
                        steps_per_epoch=step_size_train,
                        epochs=epochs)
 
+    if save_model:
+        model.save(save_dir)
+        f = open(save_dir + "recyclesort_labels.txt", "w")
+        for label in train_data.classes:
+            f.write(label + "\n")
+        f.close()
+
+
 if __name__ == '__main__':
 
     train_data, validation_data = prepare_data('C:\\BDBI\\Prototype\\Train\\Train_images', 'C:\\BDBI\\Prototype\\Train\\Val_images', True)
-    model = NN_model('MobileNetV2', visaualize_layers = True, 100)
-    train(model, 1, train_data, validation_data)
+    model = NN_model('MobileNetV2',  100, visaualize_layers = True)
+    train(model, 1, train_data, validation_data, True, 'C:\\BDBI\\Prototype\\Train\\weights\\RecycleSort_weights.h5')
