@@ -10,26 +10,31 @@ from keras.applications import imagenet_utils
 from keras.layers import Dense,GlobalAveragePooling2D
 from keras.applications import MobileNetV2
 from keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.lite import TFLiteConverter
 import numpy as np
 from IPython.display import Image
 from keras.optimizers import Adam
 import matplotlib.pyplot as plt
+from glob import glob
+import os
 
 def prepare_data(train_folder, validation_folder, validation):
-    datagen=ImageDataGenerator(preprocessing_function=preprocess_input) #included in our dependencies
 
+    #classes = os.listdir(train_folder)
+    datagen = ImageDataGenerator(preprocessing_function=preprocess_input) #included in our dependencies
     train_generator=datagen.flow_from_directory(directory = train_folder,
                                                      target_size=(224,224),
                                                      color_mode='rgb',
                                                      batch_size=32,
                                                      class_mode='categorical',
                                                      shuffle=True)
+                                                     #classes = classes)
     if validation == True:
         validation_generator = datagen.flow_from_directory(directory=validation_folder,
                                                              target_size=(224,224),
                                                              batch_size=32,
-                                                             shuffle = True,
-                                                             classes = ['MetalCans', 'PlasticBottles'])
+                                                             shuffle = True)
+                                                             #classes = classes)
 
         return train_generator, validation_generator
 
@@ -66,7 +71,7 @@ def NN_model(base_model_name, freeze_layers, visaualize_layers):
 
     return model
 
-def train(model, epochs, train_data, validation_data, save_model, save_dir, visualize):
+def train(model, epochs, train_data, validation_data, visualize):
 
     step_size_train=train_data.n//train_data.batch_size
     if validation_data:
@@ -79,17 +84,24 @@ def train(model, epochs, train_data, validation_data, save_model, save_dir, visu
                        steps_per_epoch=step_size_train,
                        epochs=epochs)
 
-    #TODO: Find a way to directly save model in tflite
-    if save_model:
-        model.save(save_dir)
-        f = open(save_dir + "recyclesort_labels.txt", "w")
-        for label in train_data.classes:
-            f.write(str(label))
-        f.close()
-
-
     if visualize:
         visualize_training_performance(history)
+
+    return model
+
+
+def saving_model(save_dir, model, classes, tflite_model):
+    #TODO: Find a way to directly save model in tflite
+    model.save(save_dir)
+    f = open(save_dir + "recyclesort_labels.txt", "w")
+    for label in classes:
+        f.write(label + "\n")
+    f.close()
+
+    if tflite_model:
+        converter = TFLiteConverter.from_keras_model_file(save_dir + "recyclesort_labels.txt")
+        tfmodel = converter.convert()
+        open ("recyclesort_weights.tflite" , "wb").write(tfmodel)
 
 def visualize_training_performance(history):
     acc = history.history['accuracy']
@@ -119,6 +131,9 @@ def visualize_training_performance(history):
 
 if __name__ == '__main__':
 
+    save_model = True
     train_data, validation_data = prepare_data('C:\\BDBI\\Prototype\\Train\\Train_images', 'C:\\BDBI\\Prototype\\Train\\Val_images', True)
     model = NN_model('MobileNetV2',  100, visaualize_layers = True)
-    train(model, 1, train_data, validation_data, True, 'C:\\BDBI\\Prototype\\Train\\weights\\RecycleSort_weights.h5', visualize=True)
+    trained_model = train(model, 1, train_data, validation_data, visualize=True)
+    if save_model:
+        saving_model('C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_weights.h5', trained_model, os.listdir('C:\\BDBI\\Prototype\\Train\\Train_images'), tflite_model = True)
