@@ -10,15 +10,17 @@ from keras.applications import imagenet_utils
 from keras.layers import Dense,GlobalAveragePooling2D
 from keras.applications import MobileNetV2
 from keras.applications.mobilenet_v2 import preprocess_input
-from tensorflow.lite import TFLiteConverter
+from tensorflow import lite
 import numpy as np
 from IPython.display import Image
 from keras.optimizers import Adam
 import matplotlib.pyplot as plt
 from glob import glob
 import os
+import argparse
+TF_CPP_MIN_LOG_LEVEL=2
 
-def prepare_data(train_folder, validation_folder, validation):
+def prepare_data(train_folder, validation_folder):
 
     #classes = os.listdir(train_folder)
     datagen = ImageDataGenerator(preprocessing_function=preprocess_input) #included in our dependencies
@@ -29,7 +31,7 @@ def prepare_data(train_folder, validation_folder, validation):
                                                      class_mode='categorical',
                                                      shuffle=True)
                                                      #classes = classes)
-    if validation == True:
+    if validation_folder:
         validation_generator = datagen.flow_from_directory(directory=validation_folder,
                                                              target_size=(224,224),
                                                              batch_size=32,
@@ -99,7 +101,7 @@ def saving_model(save_dir, model, classes, tflite_model):
     f.close()
 
     if tflite_model:
-        converter = TFLiteConverter.from_keras_model_file(save_dir + "recyclesort_labels.txt")
+        converter = lite.TFLiteConverter.from_keras_model_file(save_dir + "recyclesort_labels.txt")
         tfmodel = converter.convert()
         open ("recyclesort_weights.tflite" , "wb").write(tfmodel)
 
@@ -129,11 +131,34 @@ def visualize_training_performance(history):
     plt.xlabel('epoch')
     plt.show()
 
-if __name__ == '__main__':
 
-    save_model = True
-    train_data, validation_data = prepare_data('C:\\BDBI\\Prototype\\Train\\Train_images', 'C:\\BDBI\\Prototype\\Train\\Val_images', True)
-    model = NN_model('MobileNetV2',  100, visaualize_layers = True)
-    trained_model = train(model, 1, train_data, validation_data, visualize=True)
-    if save_model:
-        saving_model('C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_weights.h5', trained_model, os.listdir('C:\\BDBI\\Prototype\\Train\\Train_images'), tflite_model = True)
+
+parser = argparse.ArgumentParser(description='Train')
+parser.add_argument('--train_dir', type=str, default='C:\\BDBI\\Prototype\\Train\\Train_images',
+                    help='Directory where training data is stored')
+parser.add_argument('--val_dir', type=str, default='C:\\BDBI\\Prototype\\Train\\Val_images',
+                    help='Directory where validation data is stored')
+parser.add_argument('--model', type=str, default='MobileNetV2',
+                    help='Name of Base Model')
+parser.add_argument('--freeze', type=int, default=100,
+                    help='Number of layers from top to freeze while training')
+parser.add_argument('--visualize_model', type=bool, default=False,
+                    help='Visualize training performance')
+parser.add_argument('--visualize_performance', type=bool, default=True,
+                    help='Visualize training performance')
+parser.add_argument('--epochs', type=int, default=3,
+                    help='Number of epochs')
+parser.add_argument('--save_model', type=bool, default=True,
+                    help='Save model?')
+parser.add_argument('--save_dir', type=str, default='C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_weights.h5',
+                    help='Directory to save model')
+parser.add_argument('--tflite', type=bool, default=False,
+                    help='save in .tflite format')
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    train_data, validation_data = prepare_data(args.train_dir, args.val_dir)
+    NNmodel = NN_model(args.model,  args.freeze, args.visualize_model)
+    trained_model = train(NNmodel, args.epochs, train_data, validation_data, args.visualize_performance)
+    if args.save_model:
+        saving_model(args.save_dir, trained_model, os.listdir(args.train_dir), args.tflite)
