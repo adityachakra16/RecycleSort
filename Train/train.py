@@ -79,12 +79,14 @@ def train(model, epochs, train_data, validation_data, save_model, save_dir, visu
                        steps_per_epoch=step_size_train,
                        epochs=epochs)
 
+    #TODO: Find a way to directly save model in tflite
     if save_model:
         model.save(save_dir)
         f = open(save_dir + "recyclesort_labels.txt", "w")
         for label in train_data.classes:
-            f.write(label)
+            f.write(str(label))
         f.close()
+
 
     if visualize:
         visualize_training_performance(history)
