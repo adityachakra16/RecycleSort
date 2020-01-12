@@ -20,23 +20,32 @@ import os
 import argparse
 TF_CPP_MIN_LOG_LEVEL=2
 
+#TODO: Perform automatic training, validation split from one folder
 def prepare_data(train_folder, validation_folder):
+    '''
+    params:
+    train_folder: Folder containing training dataset
+    validation_folder: Folder containing validation dataset
 
-    #classes = os.listdir(train_folder)
-    datagen = ImageDataGenerator(preprocessing_function=preprocess_input) #included in our dependencies
+    purpose: Create seperate generator objects for training and validation data.
+
+    return:
+    Dataset Generator
+    ''''
+    datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
     train_generator=datagen.flow_from_directory(directory = train_folder,
                                                      target_size=(224,224),
                                                      color_mode='rgb',
                                                      batch_size=32,
                                                      class_mode='categorical',
                                                      shuffle=True)
-                                                     #classes = classes)
+
     if validation_folder:
         validation_generator = datagen.flow_from_directory(directory=validation_folder,
                                                              target_size=(224,224),
                                                              batch_size=32,
                                                              shuffle = True)
-                                                             #classes = classes)
+
 
         return train_generator, validation_generator
 
@@ -45,16 +54,23 @@ def prepare_data(train_folder, validation_folder):
 
 
 def NN_model(base_model_name, freeze_layers, visaualize_layers):
+    '''
+    params:
+    base_model_name: Name of the model used for feature extraction
+    freeze_layers: Number of layers to freeze from the top.
+    visaualize_layers: print all the layers of the model
 
+    return: model with pre-trained weights from imagenet and custom added layers
+    '''
     if base_model_name == 'MobileNetV2':
-        base_model=MobileNetV2(weights='imagenet',include_top=False) #imports the mobilenet model and discards the last 1000 neuron layer.
+        base_model=MobileNetV2(weights='imagenet',include_top=False)
 
         x=base_model.output
         x=GlobalAveragePooling2D()(x)
-        x=Dense(1024,activation='relu')(x) #we add dense layers so that the model can learn more complex functions and classify for better results.
-        x=Dense(1024,activation='relu')(x) #dense layer 2
-        x=Dense(512,activation='relu')(x) #dense layer 3
-        preds=Dense(2,activation='softmax')(x) #final layer with softmax activation
+        x=Dense(1024,activation='relu')(x)
+        x=Dense(1024,activation='relu')(x)
+        x=Dense(512,activation='relu')(x)
+        preds=Dense(2,activation='softmax')(x)
 
 
         model=Model(inputs=base_model.input,outputs=preds)
@@ -74,6 +90,16 @@ def NN_model(base_model_name, freeze_layers, visaualize_layers):
     return model
 
 def train(model, epochs, train_data, validation_data, visualize):
+    '''
+    params:
+    model: model to be trained
+    epochs: Number of epochs to be trained for
+    train_data: training data generator object
+    validation_data: validation data generator object
+    visualize: visualize training performance
+
+    return: trained model
+    '''
 
     step_size_train=train_data.n//train_data.batch_size
     if validation_data:
@@ -94,6 +120,14 @@ def train(model, epochs, train_data, validation_data, visualize):
 
 def saving_model(save_dir, model, classes, tflite_model):
     #TODO: Find a way to directly save model in tflite
+    '''
+    params:
+    save_dir: Directory to save model in
+    model: trained model
+    classes: class labels
+    tflite_model: save model in tflite format
+    '''
+
     model.save(save_dir)
     f = open(save_dir + "recyclesort_labels.txt", "w")
     for label in classes:
@@ -106,6 +140,11 @@ def saving_model(save_dir, model, classes, tflite_model):
         open ("recyclesort_weights.tflite" , "wb").write(tfmodel)
 
 def visualize_training_performance(history):
+    '''
+    params:
+    history: training history
+    '''
+
     acc = history.history['accuracy']
     val_acc = history.history['val_accuracy']
 
@@ -140,7 +179,7 @@ parser.add_argument('--val_dir', type=str, default='C:\\BDBI\\Prototype\\Train\\
                     help='Directory where validation data is stored')
 parser.add_argument('--model', type=str, default='MobileNetV2',
                     help='Name of Base Model')
-parser.add_argument('--freeze', type=int, default=100,
+parser.add_argument('--freeze', type=int, default=110,
                     help='Number of layers from top to freeze while training')
 parser.add_argument('--visualize_model', type=bool, default=False,
                     help='Visualize training performance')
