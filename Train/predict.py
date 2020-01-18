@@ -1,3 +1,10 @@
+import keras
+from keras.preprocessing import image
+from keras.models import load_model
+import numpy as np
+import matplotlib.pyplot as plt
+
+
 def load_image(img_path, show=False):
 
     img = image.load_img(img_path, target_size=(224, 224))
@@ -12,9 +19,15 @@ def load_image(img_path, show=False):
 
     return img_tensor
 
-img_path = 'C:/Users/Ferhat/Python Code/Workshop/Tensoorflow transfer learning/crow.jpg'
+img_path = 'C:\\BDBI\\Prototype\\Train\\Test_images\\testbottle1.jpeg'
+
 new_image = load_image(img_path)
-
+model = load_model('C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_weights.h5')
+model.compile(loss='binary_crossentropy',
+              optimizer='rmsprop',
+              metrics=['accuracy'])
 pred = model.predict(new_image)
+classes = [line.rstrip('\n') for line in open("C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_classes.txt", "r")]
 
-pred
+for i in range(len(classes)):
+    print ("class:", classes[i],"confidence:", pred[0][i])

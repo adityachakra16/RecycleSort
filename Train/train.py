@@ -31,7 +31,7 @@ def prepare_data(train_folder, validation_folder):
 
     return:
     Dataset Generator
-    ''''
+    '''
     datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
     train_generator=datagen.flow_from_directory(directory = train_folder,
                                                      target_size=(224,224),
@@ -173,9 +173,9 @@ def visualize_training_performance(history):
 
 
 parser = argparse.ArgumentParser(description='Train')
-parser.add_argument('--train_dir', type=str, default='C:\\BDBI\\Prototype\\Train\\Train_images',
+parser.add_argument('--train_dir', type=str, default='C:\\BDBI\\all_dataset\\TrashNet_dataset\\Current_categories\\Train\\Train',
                     help='Directory where training data is stored')
-parser.add_argument('--val_dir', type=str, default='C:\\BDBI\\Prototype\\Train\\Val_images',
+parser.add_argument('--val_dir', type=str, default='',
                     help='Directory where validation data is stored')
 parser.add_argument('--model', type=str, default='MobileNetV2',
                     help='Name of Base Model')
@@ -183,7 +183,7 @@ parser.add_argument('--freeze', type=int, default=110,
                     help='Number of layers from top to freeze while training')
 parser.add_argument('--visualize_model', type=bool, default=False,
                     help='Visualize training performance')
-parser.add_argument('--visualize_performance', type=bool, default=True,
+parser.add_argument('--visualize_performance', type=bool, default=False,
                     help='Visualize training performance')
 parser.add_argument('--epochs', type=int, default=3,
                     help='Number of epochs')
