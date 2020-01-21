@@ -179,7 +179,7 @@ parser.add_argument('--val_dir', type=str, default='',
                     help='Directory where validation data is stored')
 parser.add_argument('--model', type=str, default='MobileNetV2',
                     help='Name of Base Model')
-parser.add_argument('--freeze', type=int, default=110,
+parser.add_argument('--freeze', type=int, default=155,
                     help='Number of layers from top to freeze while training')
 parser.add_argument('--visualize_model', type=bool, default=False,
                     help='Visualize training performance')
