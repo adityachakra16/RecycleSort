@@ -37,12 +37,12 @@ def load_imgs(image_folder):
 
 def predictone(img_path):
     new_image = load_image(img_path)
-    model = load_model('C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_weights.h5')
+    model = load_model((os.environ['HOME']) + '/BDBI/Prototype/Train/weights/recyclesort_weights.h5')
     model.compile(loss='binary_crossentropy',
                   optimizer='Adam',
                   metrics=['accuracy'])
     pred = model.predict(new_image)
-    classes = [line.rstrip('\n') for line in open("C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_classes.txt", "r")]
+    classes = [line.rstrip('\n') for line in open((os.environ['HOME']) + "/chakra/BDBI/Prototype/Train/weights/recyclesort_classes.txt", "r")]
 
     for i in range(len(classes)):
         print ("class:", classes[i],"confidence:", pred[0][i])
@@ -50,17 +50,16 @@ def predictone(img_path):
 
 def predictall(test_folder):
     test_images = load_imgs(test_folder)
-    model = load_model('C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_weights.h5')
+    model = load_model((os.environ['HOME']) + "/chakra/BDBI/Prototype/Train/weights/recyclesort_weights.h5")
     model.compile(loss='categorical_crossentropy',
                   optimizer='Adam',
                   metrics=['accuracy'])
-    classes = [line.rstrip('\n') for line in open("C:\\BDBI\\Prototype\\Train\\weights\\recyclesort_classes.txt", "r")]
+    classes = [line.rstrip('\n') for line in open((os.environ['HOME']) + "/chakra/BDBI/Prototype/Train/weights/recyclesort_classes.txt", "r")]
     for filename, image in test_images.items():
         pred = model.predict(image)
         pred = pred[0]
         max_index = np.argmax(pred)
         print("Actual:", filename, "Predicted", classes[max_index])
 
-
-predictall('C:\\BDBI\\Prototype\\Train\\Test_images')
-img_path = 'C:\\BDBI\\Prototype\\Train\\Test_images\\testbottle1.jpeg'
+predictall((os.environ['HOME']) + '/chakra/BDBI/Prototype/Train/Test_images')
+img_path = './chakra/BDBI/Prototype/Train/Test_images/testbottle1.jpeg'
